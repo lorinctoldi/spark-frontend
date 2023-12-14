@@ -74,9 +74,13 @@ function App() {
     const convertImages = async () => {
       try {
         const promises = imageFiles.map(async (file, index) => {
-          console.log(`Converting image ${index + 1}...`);
 
-          const backgroundRemovedBlob = await imglyRemoveBackground(file);
+          let backgroundRemovedBlob:Blob | MediaSource;
+          if(resize_o) 
+            // help me out here, just convert to blob
+            backgroundRemovedBlob = new Blob([file]);
+          else
+            backgroundRemovedBlob = await imglyRemoveBackground(file);
 
           const convertedUrl = URL.createObjectURL(backgroundRemovedBlob);
           return { name: originalNames[index], url: convertedUrl };
@@ -103,12 +107,14 @@ function App() {
             convertedData.map(async (item, index) => {
               const blob = await fetch(item.url).then((res) => res.blob());
               formData.append("images", blob, item.name);
+              formData.append('company', spark_o ? "spark" : "yellow_malone");
+              formData.append('crop', remove_o ? 'no-crop' : 'crop');
             })
           );
 
           // Post the processed images to the server
           const response = await axios.post(
-            "http://localhost:3001/upload",
+            "https://spark-server-swbu.onrender.com/upload",
             formData
           );
 
